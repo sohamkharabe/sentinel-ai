@@ -1,7 +1,42 @@
 "use client";
 
+import dynamic from 'next/dynamic';
 import { useRef } from 'react';
-import { MapContainer, TileLayer } from 'react-leaflet';
+
+const LeafletMap = dynamic(
+  () =>
+    import('react-leaflet').then((mod) => {
+      const MapContainer = mod.MapContainer;
+      const TileLayer = mod.TileLayer;
+
+      return function LeafletMapInner({
+        mapRef,
+      }: {
+        mapRef: React.MutableRefObject<any | null>;
+      }) {
+        return (
+          <MapContainer
+            center={[25.5, 92.5]}
+            zoom={6}
+            scrollWheelZoom={false}
+            className="h-full w-full rounded"
+            whenCreated={(mapInstance) => {
+              mapRef.current = mapInstance;
+            }}
+            zoomControl={false}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; OpenStreetMap contributors'
+            />
+          </MapContainer>
+        );
+      };
+    }),
+  {
+    ssr: false,
+  }
+);
 
 export default function MapPanel() {
   const mapRef = useRef<any | null>(null);
@@ -31,21 +66,7 @@ export default function MapPanel() {
       </div>
 
       <div className="h-64 md:h-80 rounded border border-slate-50 relative overflow-hidden">
-        <MapContainer
-          center={[25.5, 92.5]}
-          zoom={6}
-          scrollWheelZoom={false}
-          className="h-full w-full rounded"
-          whenCreated={(mapInstance) => {
-            mapRef.current = mapInstance;
-          }}
-          zoomControl={false}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; OpenStreetMap contributors'
-          />
-        </MapContainer>
+        <LeafletMap mapRef={mapRef} />
 
         {/* Center overlay text */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
