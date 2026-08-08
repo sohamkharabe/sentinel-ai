@@ -3,13 +3,16 @@
 import dynamic from "next/dynamic";
 
 const LeafletDistrictMap = dynamic(
-  () => import("./LeafletDistrictMap"),
+  () =>
+    import("./LeafletDistrictMap").then(
+      (mod) => mod.default
+    ),
   {
     ssr: false,
 
     loading: () => (
-      <div className="h-full w-full flex items-center justify-center bg-slate-50">
-        <span className="text-sm text-slate-500">
+      <div className="flex h-full w-full items-center justify-center bg-slate-100">
+        <span className="text-base font-bold text-slate-700">
           Loading district map...
         </span>
       </div>
@@ -17,69 +20,71 @@ const LeafletDistrictMap = dynamic(
   }
 );
 
-export default function MapPanel() {
+type Props = {
+  heightClass?: string;
+};
+
+export default function MapPanel({ heightClass = 'relative h-[420px] w-full overflow-hidden' }: Props) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white">
-      {/* Header */}
+    <div className="w-full bg-white">
 
-      <div className="flex items-center justify-between px-5 py-4">
-        <div>
-          <h2 className="text-lg font-medium text-slate-900">
-            Operational Risk Map
-          </h2>
+      {/* =====================================================
+          MAP HEADER
+      ====================================================== */}
 
-          <p className="mt-1 text-sm text-slate-500">
-            Northeast India • District Risk Monitoring
-          </p>
+      <div className="border-b-2 border-slate-300 px-6 py-5">
+
+        <div className="flex items-start justify-between gap-6">
+
+          {/* Title */}
+
+          <div>
+            <h2 className="text-xl font-extrabold tracking-tight text-slate-950">
+              Operational Risk Map
+            </h2>
+
+            <p className="mt-1 text-sm font-semibold text-slate-700">
+              Northeast India • District Risk Monitoring
+            </p>
+          </div>
+
+
+          {/* Risk Legend */}
+
+          <div className="flex flex-wrap items-center gap-5 text-sm font-bold text-slate-900">
+
+            <div className="flex items-center gap-2">
+              <span className="h-3.5 w-3.5 rounded-full bg-green-600" />
+              <span>Safe</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="h-3.5 w-3.5 rounded-full bg-yellow-500" />
+              <span>Moderate</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="h-3.5 w-3.5 rounded-full bg-red-700" />
+              <span>High Risk</span>
+            </div>
+
+          </div>
+
         </div>
 
-        {/* Legend */}
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-green-500" />
-            <span className="text-xs text-slate-600">
-              Safe
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-yellow-400" />
-            <span className="text-xs text-slate-600">
-              Moderate
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-red-600" />
-            <span className="text-xs text-slate-600">
-              High Risk
-            </span>
-          </div>
-        </div>
       </div>
 
-      {/* Map */}
 
-      <div className="relative h-64 overflow-hidden rounded-b-lg border-t border-slate-100 md:h-80">
+      {/* =====================================================
+          ACTUAL DISTRICT MAP
+      ====================================================== */}
+
+      <div className={heightClass}>
+
         <LeafletDistrictMap />
 
-        {/* Compass */}
-
-        <div className="pointer-events-none absolute left-4 top-4 z-[1000]">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm">
-            🧭
-          </div>
-        </div>
-
-        {/* Last updated */}
-
-        <div className="pointer-events-none absolute bottom-3 left-3 z-[1000]">
-          <div className="rounded bg-white/90 px-3 py-1 text-xs text-slate-500 shadow-sm">
-            Last Updated: Just now
-          </div>
-        </div>
       </div>
+
     </div>
   );
 }

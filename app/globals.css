@@ -6,7 +6,8 @@
   --foreground: #171717;
 }
 
-@theme inline {
+/* Map theme variables into CSS custom properties for broader tool compatibility */
+:root {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
