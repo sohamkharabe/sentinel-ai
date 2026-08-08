@@ -15,7 +15,7 @@ export default function Page() {
             <p className="mt-3 text-lg text-slate-700">{TAGLINE}</p>
 
             <p className="mt-6 max-w-xl text-slate-600">
-              SentinelAI enables real-time disease monitoring, rapid flood response coordination, and AI-driven risk
+              Suraksha Saarthi enables real-time disease monitoring, rapid flood response coordination, and AI-driven risk
               predictions to protect communities across Northeast India. Integrates community reports, environmental
               sensors and historical data to prioritise interventions.
             </p>
@@ -56,7 +56,7 @@ export default function Page() {
 
         <section id="contact" className="mt-16 pb-8">
           <h2 className="text-lg font-medium">Contact</h2>
-          <p className="mt-2 text-sm text-slate-600">For enquiries about SentinelAI deployments and Government integrations, contact the project team.</p>
+          <p className="mt-2 text-sm text-slate-600">For enquiries about Suraksha Saarthi deployments and Government integrations, contact the project team.</p>
         </section>
       </Container>
 

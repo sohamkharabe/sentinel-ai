@@ -1,4 +1,4 @@
-export const PROJECT_NAME = 'SentinelAI';
+export const PROJECT_NAME = 'Suraksha Saarthi';
 
 export const TAGLINE = 'AI-powered Community Health Surveillance & Disaster Response Platform';
 
