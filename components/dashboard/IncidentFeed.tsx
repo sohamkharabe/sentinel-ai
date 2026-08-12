@@ -1,13 +1,11 @@
 "use client";
 
-type Severity = "High" | "Medium";
-
 export type Incident = {
   id: string;
   title: string;
   district: string;
   description: string;
-  severity: Severity;
+  severity: "High" | "Medium";
   reported: string;
   status: "ACTIVE";
   recommendedResponse: string;
@@ -60,8 +58,8 @@ export default function IncidentFeed({
   onCreateResourceRequest,
 }: IncidentFeedProps) {
   return (
-    <section className="overflow-hidden rounded-lg border-2 border-slate-300 bg-white shadow-sm">
-
+    <section className="overflow-hidden rounded-lg border-2 border-slate-400 bg-white shadow-sm">
+      
       {/* HEADER */}
       <div className="border-b-2 border-slate-300 px-5 py-4">
         <h2 className="text-lg font-bold text-slate-950">
@@ -73,7 +71,7 @@ export default function IncidentFeed({
         </p>
       </div>
 
-      {/* INCIDENTS */}
+      {/* INCIDENT LIST */}
       <div className="space-y-3 p-4">
         {incidents.map((incident) => {
           const isHigh = incident.severity === "High";
@@ -88,7 +86,6 @@ export default function IncidentFeed({
               }`}
             >
               <div className="flex items-start justify-between gap-4">
-
                 <h3 className="text-base font-bold text-slate-950">
                   {incident.title}
                 </h3>
@@ -102,7 +99,6 @@ export default function IncidentFeed({
                 >
                   {incident.severity}
                 </span>
-
               </div>
 
               <p className="mt-2 text-sm font-medium leading-6 text-slate-700">
@@ -110,7 +106,6 @@ export default function IncidentFeed({
               </p>
 
               <div className="mt-3 flex items-center justify-between">
-
                 <span className="text-xs font-semibold text-slate-600">
                   {incident.reported}
                 </span>
@@ -124,7 +119,6 @@ export default function IncidentFeed({
                 >
                   CREATE RESOURCE REQUEST →
                 </button>
-
               </div>
             </div>
           );
