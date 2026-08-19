@@ -18,6 +18,8 @@ export type Incident = {
   recommendedResponse: string;
 };
 
+type NewIncident = Incident;
+
 export type AlertSeverity = "CRITICAL" | "HIGH" | "MODERATE";
 export type AlertStatus = "NEW" | "ACKNOWLEDGED" | "MONITORING" | "ESCALATED" | "RESOLVED" | "CLOSED";
 export type AlertSource = "Flood Monitoring" | "Disease Surveillance" | "Incident Report" | "District Risk";
@@ -122,6 +124,7 @@ type OperationalStore = {
   alerts: Alert[];
   resourceRequests: ResourceRequest[];
   dispatches: Dispatch[];
+  createIncident: (incident: NewIncident) => { incident: Incident; created: boolean };
   ensureAlertForIncident: (incidentId: string) => Alert | undefined;
   updateAlert: (id: string, update: Partial<Pick<Alert, "status" | "assignedTeam">>) => void;
   createResourceRequest: (request: NewResourceRequest) => { request: ResourceRequest; created: boolean };
@@ -134,19 +137,34 @@ const OperationalStoreContext = createContext<OperationalStore | null>(null);
 const incidentPriority = (severity: Incident["severity"]): AlertSeverity => severity === "High" ? "HIGH" : "MODERATE";
 
 export function OperationalStoreProvider({ children }: { children: ReactNode }) {
-  const [incidents] = useState(initialIncidents);
+  const [incidents, setIncidents] = useState(initialIncidents);
   const [alerts, setAlerts] = useState(initialAlerts);
   const [resourceRequests, setResourceRequests] = useState(initialResourceRequests);
   const [dispatches, setDispatches] = useState(initialDispatches);
 
+  const ensureAlertForIncidentRecord = (incident: Incident, currentAlerts: Alert[]) => {
+    const existing = currentAlerts.find((alert) => alert.incidentId === incident.id);
+    if (existing) return existing;
+    return { id: `ALT-${Date.now()}`, incidentId: incident.id, title: incident.title, district: incident.district.split(",")[0], severity: incidentPriority(incident.severity), priority: incidentPriority(incident.severity), source: "Incident Report" as const, status: "NEW" as const, createdAt: new Date().toISOString().slice(0, 16).replace("T", " "), recommendedResponse: incident.recommendedResponse, assignedTeam: "District Emergency Control Room", description: incident.description };
+  };
+
   const ensureAlertForIncident = (incidentId: string) => {
     const incident = incidents.find((item) => item.id === incidentId);
     if (!incident) return undefined;
-    const existing = alerts.find((alert) => alert.incidentId === incidentId);
-    if (existing) return existing;
-    const alert: Alert = { id: `ALT-${Date.now()}`, incidentId, title: incident.title, district: incident.district.split(",")[0], severity: incidentPriority(incident.severity), priority: incidentPriority(incident.severity), source: "Incident Report", status: "NEW", createdAt: new Date().toISOString().slice(0, 16).replace("T", " "), recommendedResponse: incident.recommendedResponse, assignedTeam: "District Emergency Control Room", description: incident.description };
+    const alert = ensureAlertForIncidentRecord(incident, alerts);
+    if (alerts.some((item) => item.id === alert.id)) return alert;
     setAlerts((current) => [...current, alert]);
     return alert;
+  };
+
+  const createIncident: OperationalStore["createIncident"] = (incident) => {
+    const existing = incidents.find((item) => item.id === incident.id);
+    if (existing) return { incident: existing, created: false };
+
+    const alert = ensureAlertForIncidentRecord(incident, alerts);
+    setIncidents((current) => [...current, incident]);
+    setAlerts((current) => current.some((item) => item.incidentId === incident.id) ? current : [...current, alert]);
+    return { incident, created: true };
   };
 
   const updateAlert: OperationalStore["updateAlert"] = (id, update) => {
@@ -173,7 +191,7 @@ export function OperationalStoreProvider({ children }: { children: ReactNode }) 
     return dispatch;
   };
 
-  return <OperationalStoreContext.Provider value={{ incidents, alerts, resourceRequests, dispatches, ensureAlertForIncident, updateAlert, createResourceRequest, updateResourceRequestStatus, createDispatchForRequest }}>{children}</OperationalStoreContext.Provider>;
+  return <OperationalStoreContext.Provider value={{ incidents, alerts, resourceRequests, dispatches, createIncident, ensureAlertForIncident, updateAlert, createResourceRequest, updateResourceRequestStatus, createDispatchForRequest }}>{children}</OperationalStoreContext.Provider>;
 }
 
 export function useOperationalStore() {

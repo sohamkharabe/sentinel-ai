@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
+import { useOperationalStore } from "@/lib/operational-store";
 
 type WorkerStatus = "ON FIELD" | "AVAILABLE" | "TRAINING" | "UNAVAILABLE";
 
@@ -26,7 +27,7 @@ type FieldReport = {
   village: string;
   type: "Disease Surveillance" | "Household Survey" | "Water Quality" | "Health Camp" | "Emergency Visit";
   date: string;
-  status: "SUBMITTED" | "PENDING" | "REVIEWED";
+  status: "SUBMITTED" | "PENDING" | "REVIEWED" | "ESCALATED";
   summary: string;
   severity: "HIGH" | "MEDIUM" | "LOW";
 };
@@ -274,6 +275,8 @@ const getReportStatusClasses = (status: FieldReport["status"]) => {
       return "border border-amber-600 bg-amber-50 text-amber-700";
     case "REVIEWED":
       return "border border-emerald-700 bg-emerald-50 text-emerald-700";
+    case "ESCALATED":
+      return "border border-violet-700 bg-violet-50 text-violet-700";
     default:
       return "border border-slate-300 bg-slate-100 text-slate-700";
   }
@@ -293,6 +296,7 @@ const getSeverityClasses = (severity: FieldReport["severity"]) => {
 };
 
 export default function AshaWorkersPage() {
+  const { createIncident } = useOperationalStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [districtFilter, setDistrictFilter] = useState<(typeof DISTRICT_OPTIONS)[number]>("All Districts");
@@ -300,6 +304,7 @@ export default function AshaWorkersPage() {
   const [workers, setWorkers] = useState<ASHAWorker[]>(initialWorkers);
   const [selectedWorker, setSelectedWorker] = useState<ASHAWorker | null>(null);
   const [quickActionMessage, setQuickActionMessage] = useState("");
+  const [reportStatuses, setReportStatuses] = useState<Record<string, FieldReport["status"]>>({});
 
   const filteredWorkers = useMemo(() => {
     return workers.filter((worker) => {
@@ -336,6 +341,26 @@ export default function AshaWorkersPage() {
     setQuickActionMessage(`${worker?.name ?? "Worker"} marked unavailable.`);
     setSelectedWorker((current) =>
       current && current.id === workerId ? { ...current, status: "UNAVAILABLE" } : current,
+    );
+  };
+
+  const handleCreateIncident = (report: FieldReport) => {
+    const result = createIncident({
+      id: `asha-report-${report.id}`,
+      title: `${report.type} report - ${report.district}`,
+      district: report.district,
+      description: `${report.summary} Field report submitted by ${report.workerName} from ${report.village}.`,
+      severity: report.severity === "LOW" ? "Medium" : "High",
+      reported: report.date,
+      status: "ACTIVE",
+      recommendedResponse: `Coordinate follow-up for the ${report.type.toLowerCase()} report in ${report.district}.`,
+    });
+
+    setReportStatuses((current) => ({ ...current, [report.id]: "ESCALATED" }));
+    setQuickActionMessage(
+      result.created
+        ? "Field report escalated to operational incident."
+        : "Operational incident already exists for this field report.",
     );
   };
 
@@ -548,8 +573,10 @@ export default function AshaWorkersPage() {
             </div>
 
             <div className="space-y-4">
-              {initialReports.map((report) => (
-                <div key={report.id} className="rounded-md border-2 border-slate-300 bg-slate-50 p-4">
+              {initialReports.map((report) => {
+                const reportStatus = reportStatuses[report.id] ?? report.status;
+                return (
+                  <div key={report.id} className="rounded-md border-2 border-slate-300 bg-slate-50 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <p className="text-lg font-extrabold text-slate-950">{report.type}</p>
@@ -559,8 +586,8 @@ export default function AshaWorkersPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      <span className={`inline-flex rounded-md px-3 py-1.5 text-sm font-extrabold ${getReportStatusClasses(report.status)}`}>
-                        {report.status}
+                      <span className={`inline-flex rounded-md px-3 py-1.5 text-sm font-extrabold ${getReportStatusClasses(reportStatus)}`}>
+                        {reportStatus}
                       </span>
                       <span className={`inline-flex rounded-md px-3 py-1.5 text-sm font-extrabold ${getSeverityClasses(report.severity)}`}>
                         {report.severity}
@@ -574,8 +601,18 @@ export default function AshaWorkersPage() {
                   </div>
 
                   <p className="mt-3 text-base font-medium leading-7 text-slate-700">{report.summary}</p>
+                  {reportStatus !== "ESCALATED" && (
+                    <button
+                      type="button"
+                      onClick={() => handleCreateIncident(report)}
+                      className="mt-4 rounded-md border-2 border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-slate-100"
+                    >
+                      CREATE INCIDENT
+                    </button>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </section>
 
