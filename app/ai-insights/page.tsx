@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
+import { useOperationalStore, type Alert, type Dispatch, type Incident, type ResourceRequest } from "@/lib/operational-store";
 
 type InsightType = "Disease Anomaly" | "Flood Risk" | "Resource Shortage" | "Incident Cluster" | "District Risk";
 type InsightPriority = "Critical" | "High" | "Moderate";
@@ -50,116 +51,117 @@ const CONFIDENCE_OPTIONS = [
   "Low (<50%)",
 ] as const;
 
-const initialInsights: Insight[] = [
-  {
-    id: "INS-2801",
-    title: "Elevated disease incidence in Dibrugarh cluster",
-    district: "Dibrugarh",
-    type: "Disease Anomaly",
-    priority: "Critical",
-    confidence: 94,
-    status: "NEW",
-    summary: "Analysis of reported cases indicates a 34% increase in suspected illness patterns over the past 7 days compared to historical baseline.",
-    signals: [
-      "ASHA worker reports: 28 suspected cases in Namrup block",
-      "Primary health centre admission rate up 31%",
-      "Geographic clustering around Lakha oil refinery area",
-      "Age distribution skewed towards 18-45 demographic",
-    ],
-    recommendation: "Deploy rapid response team for field investigation. Collect biological samples for pathogen identification. Increase community surveillance in affected block.",
-    createdAt: "2026-08-12 14:30",
-  },
-  {
-    id: "INS-2802",
-    title: "Flood risk escalation in Lakhimpur district",
-    district: "Lakhimpur",
-    type: "Flood Risk",
-    priority: "High",
-    confidence: 87,
-    status: "MONITORING",
-    summary: "Hydrological model predicts 2.5m water level rise in Brahmaputra within 48 hours based on upstream rainfall patterns and current discharge rates.",
-    signals: [
-      "Cumulative rainfall in upper Assam: 185mm in past 72 hours",
-      "River discharge trending upward at Dibrugarh gauge station",
-      "Forecast models converging on 92-hour flood event probability",
-      "Soil saturation index at 87% in Lakhimpur sub-basin",
-    ],
-    recommendation: "Pre-position relief supplies. Alert district administration for early evacuation drills. Ensure generator fuel and medical supply stockpiles in flood-prone areas.",
-    createdAt: "2026-08-12 10:45",
-  },
-  {
-    id: "INS-2803",
-    title: "Critical medical supply shortage alert for Tinsukia",
-    district: "Tinsukia",
-    type: "Resource Shortage",
-    priority: "High",
-    confidence: 91,
-    status: "NEW",
-    summary: "Cross-referencing consumption data and current stock levels indicates depletion of essential medications and blood products within 5-7 days at district hospital.",
-    signals: [
-      "Antimalarial drugs inventory at 18% of monthly requirement",
-      "O-negative blood type stock will be exhausted by 2026-08-17",
-      "IV fluid consumption rate increased 24% due to recent outbreak response",
-      "District supply chain delays reported for 3 consecutive weeks",
-    ],
-    recommendation: "Initiate emergency procurement. Coordinate with state medical stores for expedited delivery. Consider short-term inter-district resource sharing agreements.",
-    createdAt: "2026-08-12 09:15",
-  },
-  {
-    id: "INS-2804",
-    title: "Incident clustering in Jorhat urban zone",
-    district: "Jorhat",
-    type: "Incident Cluster",
-    priority: "Moderate",
-    confidence: 78,
-    status: "MONITORING",
-    summary: "Spatial analysis identifies significant concentration of health emergencies and resource requests in Jorhat urban area over past 10 days.",
-    signals: [
-      "15 incident reports within 2km radius of Jorhat town centre",
-      "Temporal pattern shows increase during evening hours (17:00-23:00)",
-      "Common incident types: respiratory distress, acute gastroenteritis",
-      "Resource request spike correlates with weather events",
-    ],
-    recommendation: "Establish temporary field clinic in urban zone. Increase ASHA worker presence for community education. Strengthen disease surveillance coordination.",
-    createdAt: "2026-08-12 11:20",
-  },
-  {
-    id: "INS-2805",
-    title: "Sivasagar district risk elevation",
-    district: "Sivasagar",
-    type: "District Risk",
-    priority: "Moderate",
-    confidence: 82,
-    status: "NEW",
-    summary: "Multi-factor composite risk assessment shows elevated operational vulnerability due to convergence of environmental stress, resource constraints, and incident activity.",
-    signals: [
-      "Weather stress index: High (monsoon intensity above normal)",
-      "Healthcare resource capacity utilization: 73%",
-      "Incident reporting rate: 8% above district baseline",
-      "Inter-district patient referral volume increasing",
-    ],
-    recommendation: "Conduct comprehensive district readiness assessment. Review contingency protocols. Enhance coordination with neighbouring districts for surge capacity.",
-    createdAt: "2026-08-12 08:30",
-  },
-  {
-    id: "INS-2806",
-    title: "Sonitpur resource deployment recommendation",
-    district: "Sonitpur",
-    type: "Resource Shortage",
-    priority: "Moderate",
-    confidence: 75,
-    status: "RESOLVED",
-    summary: "Predictive analysis suggests requirement for additional community health worker capacity to support population coverage in remote blocks.",
-    signals: [
-      "Population-to-ASHA worker ratio exceeds state guideline by 14%",
-      "ASHA worker fatigue indicators elevated from workload data",
-      "Geographic access challenges in 3 remote blocks",
-      "Community feedback indicates reduced service frequency",
-    ],
-    recommendation: "Recruit and train 12-15 additional ASHA workers for Sonitpur. Prioritize remote blocks with poorest access. Establish peer support network.",
-    createdAt: "2026-08-11 16:00",
-  },
-];
+const districtName = (district: string) => district.split(",")[0].trim();
+
+const operationalInsights = (
+  incidents: Incident[],
+  alerts: Alert[],
+  resourceRequests: ResourceRequest[],
+  dispatches: Dispatch[],
+): Insight[] => {
+  const insights: Insight[] = [];
+  const activeAlerts = alerts.filter((alert) => !["RESOLVED", "CLOSED"].includes(alert.status));
+  const addInsight = (insight: Insight) => insights.push(insight);
+
+  alerts.filter((alert) => alert.severity === "CRITICAL").forEach((alert, index) => {
+    addInsight({
+      id: `AI-CRITICAL-${alert.id}`,
+      title: `Immediate response required: ${alert.title}`,
+      district: districtName(alert.district),
+      type: "District Risk",
+      priority: "Critical",
+      confidence: 96,
+      status: alert.status === "NEW" ? "NEW" : "MONITORING",
+      summary: `A critical operational alert is active in ${districtName(alert.district)} and requires immediate response coordination.`,
+      signals: [alert.title, `Alert severity: ${alert.severity}`, `Operational status: ${alert.status}`],
+      recommendation: `Recommend immediate response: ${alert.recommendedResponse}`,
+      createdAt: alert.createdAt || `${index}`,
+    });
+  });
+
+  const incidentsByDistrict = new Map<string, Incident[]>();
+  incidents.forEach((incident) => {
+    const district = districtName(incident.district);
+    incidentsByDistrict.set(district, [...(incidentsByDistrict.get(district) ?? []), incident]);
+  });
+  incidentsByDistrict.forEach((districtIncidents, district) => {
+    if (districtIncidents.length < 2) return;
+    addInsight({
+      id: `AI-CLUSTER-${district}`,
+      title: `Incident cluster detected in ${district}`,
+      district,
+      type: "Incident Cluster",
+      priority: "High",
+      confidence: 84,
+      status: "MONITORING",
+      summary: `${districtIncidents.length} active incidents are recorded in the same district.`,
+      signals: districtIncidents.map((incident) => incident.title),
+      recommendation: "Recommend increased district monitoring and coordinated field review.",
+      createdAt: districtIncidents[0].reported,
+    });
+  });
+
+  const pendingByDistrict = new Map<string, ResourceRequest[]>();
+  resourceRequests.filter((request) => request.status === "PENDING").forEach((request) => {
+    const district = districtName(request.district);
+    pendingByDistrict.set(district, [...(pendingByDistrict.get(district) ?? []), request]);
+  });
+  pendingByDistrict.forEach((requests, district) => {
+    addInsight({
+      id: `AI-RESOURCES-${district}`,
+      title: `Resource shortage response demand in ${district}`,
+      district,
+      type: "Resource Shortage",
+      priority: requests.some((request) => request.priority === "CRITICAL") ? "Critical" : "High",
+      confidence: 89,
+      status: "NEW",
+      summary: `${requests.length} pending resource request${requests.length === 1 ? "" : "s"} indicate unresolved response demand.`,
+      signals: requests.map((request) => `${request.id}: ${request.requestedResources}`),
+      recommendation: "Recommend reviewing and approving pending resources for district response.",
+      createdAt: requests[0].createdAt,
+    });
+  });
+
+  const highRiskByDistrict = new Map<string, Alert[]>();
+  activeAlerts.filter((alert) => ["CRITICAL", "HIGH"].includes(alert.severity)).forEach((alert) => {
+    const district = districtName(alert.district);
+    highRiskByDistrict.set(district, [...(highRiskByDistrict.get(district) ?? []), alert]);
+  });
+  highRiskByDistrict.forEach((districtAlerts, district) => {
+    if (districtAlerts.length < 2) return;
+    addInsight({
+      id: `AI-RISK-${district}`,
+      title: `District risk escalation in ${district}`,
+      district,
+      type: "District Risk",
+      priority: "High",
+      confidence: 92,
+      status: "MONITORING",
+      summary: `${districtAlerts.length} active high-risk alerts indicate escalating operational pressure.`,
+      signals: districtAlerts.map((alert) => `${alert.severity}: ${alert.title}`),
+      recommendation: "Recommend increased monitoring and district-level coordination across active alerts.",
+      createdAt: districtAlerts[0].createdAt,
+    });
+  });
+
+  dispatches.filter((dispatch) => dispatch.status !== "COMPLETED").forEach((dispatch) => {
+    addInsight({
+      id: `AI-DISPATCH-${dispatch.id}`,
+      title: `Active dispatch deployment in ${districtName(dispatch.district)}`,
+      district: districtName(dispatch.district),
+      type: "District Risk",
+      priority: "Moderate",
+      confidence: 80,
+      status: "MONITORING",
+      summary: `${dispatch.resources} is currently ${dispatch.status.toLowerCase()} with ${dispatch.progress}% deployment progress.`,
+      signals: [`Dispatch ${dispatch.id}`, `Status: ${dispatch.status}`, `ETA: ${dispatch.eta}`],
+      recommendation: "Recommend monitoring deployment status and confirming field receipt.",
+      createdAt: dispatch.lastUpdated,
+    });
+  });
+
+  return insights;
+};
 
 const getTypeClasses = (type: InsightType) => {
   switch (type) {
@@ -212,14 +214,24 @@ const getConfidenceColor = (confidence: number) => {
 };
 
 export default function AIInsightsPage() {
+  const { incidents, alerts, resourceRequests, dispatches } = useOperationalStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [insights, setInsights] = useState<Insight[]>(initialInsights);
+  const [insightStatuses, setInsightStatuses] = useState<Record<string, InsightStatus>>({});
   const [districtFilter, setDistrictFilter] = useState<(typeof DISTRICT_OPTIONS)[number]>("All Districts");
   const [typeFilter, setTypeFilter] = useState<(typeof INSIGHT_TYPE_OPTIONS)[number]>("All Types");
   const [priorityFilter, setPriorityFilter] = useState<(typeof PRIORITY_OPTIONS)[number]>("All Priorities");
   const [confidenceFilter, setConfidenceFilter] = useState<(typeof CONFIDENCE_OPTIONS)[number]>("All Confidence");
   const [selectedInsight, setSelectedInsight] = useState<Insight | null>(null);
   const modalContentRef = useRef<HTMLDivElement | null>(null);
+
+  const derivedInsights = useMemo(
+    () => operationalInsights(incidents, alerts, resourceRequests, dispatches),
+    [incidents, alerts, resourceRequests, dispatches],
+  );
+  const insights = useMemo(
+    () => derivedInsights.map((insight) => ({ ...insight, status: insightStatuses[insight.id] ?? insight.status })),
+    [derivedInsights, insightStatuses],
+  );
 
   useEffect(() => {
     modalContentRef.current?.scrollTo({
@@ -260,11 +272,7 @@ export default function AIInsightsPage() {
   const handleStatusUpdate = (nextStatus: InsightStatus) => {
     if (!selectedInsight) return;
 
-    setInsights((currentInsights) =>
-      currentInsights.map((insight) =>
-        insight.id === selectedInsight.id ? { ...insight, status: nextStatus } : insight
-      )
-    );
+    setInsightStatuses((currentStatuses) => ({ ...currentStatuses, [selectedInsight.id]: nextStatus }));
 
     setSelectedInsight((current) => (current ? { ...current, status: nextStatus } : null));
   };
