@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useOperationalStore, type Alert, type Incident } from "@/lib/operational-store";
 
 import Sidebar from "@/components/dashboard/Sidebar";
 import StatCard from "@/components/dashboard/StatCard";
@@ -11,6 +12,9 @@ import ResourceRequestBuilder from "@/components/dashboard/ResourceRequestBuilde
 
 export default function DashboardPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  const { incidents, ensureAlertForIncident } = useOperationalStore();
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -308,11 +312,10 @@ export default function DashboardPage() {
             {/* INCIDENT FEED */}
 
             <IncidentFeed
+              incidents={incidents}
               onCreateResourceRequest={(incident) => {
-                console.log(
-                  "Create resource request for:",
-                  incident
-                );
+                setSelectedIncident(incident);
+                setSelectedAlert(ensureAlertForIncident(incident.id) ?? null);
               }}
             />
 
@@ -335,7 +338,7 @@ export default function DashboardPage() {
             {/* EMERGENCY DISPATCH */}
 
             <div id="dispatch-section">
-              <ResourceRequestBuilder />
+              <ResourceRequestBuilder incident={selectedIncident} alertId={selectedAlert?.id} />
             </div>
 
 

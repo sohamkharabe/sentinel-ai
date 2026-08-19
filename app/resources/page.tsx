@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
+import { useOperationalStore } from "@/lib/operational-store";
 
 type InventoryStatus = "LOW STOCK" | "NORMAL" | "OUT OF STOCK";
 
@@ -305,6 +306,9 @@ const initialDispatches: Dispatch[] = [
   },
 ];
 
+void initialRequests;
+void initialDispatches;
+
 const getInventoryStatus = (available: number, minimumStock: number): InventoryStatus => {
   if (available === 0) {
     return "OUT OF STOCK";
@@ -364,8 +368,7 @@ export default function ResourcesPage() {
   const [districtFilter, setDistrictFilter] = useState<(typeof DISTRICT_OPTIONS)[number]> ("All Districts");
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_OPTIONS)[number]>("All Status");
   const [inventory] = useState<ResourceInventory[]>(initialInventory);
-  const [requests, setRequests] = useState<ResourceRequest[]>(initialRequests);
-  const [dispatches, setDispatches] = useState<Dispatch[]>(initialDispatches);
+  const { resourceRequests: requests, dispatches, updateResourceRequestStatus, createDispatchForRequest } = useOperationalStore();
   const [selectedInventory, setSelectedInventory] = useState<ResourceInventory | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<ResourceRequest | null>(null);
   const [notice, setNotice] = useState("");
@@ -413,29 +416,8 @@ export default function ResourcesPage() {
       return;
     }
 
-    const updatedRequest: ResourceRequest = {
-      ...selectedRequest,
-      status: "APPROVED",
-    };
-
-    setRequests((currentRequests) =>
-      currentRequests.map((request) =>
-        request.id === selectedRequest.id ? updatedRequest : request
-      )
-    );
-
-    const dispatchRecord: Dispatch = {
-      id: `DSP-${Date.now()}`,
-      district: selectedRequest.district,
-      authority: selectedRequest.authority,
-      resources: selectedRequest.requestedResources,
-      eta: "TBD",
-      status: "PREPARING",
-      progress: 12,
-      lastUpdated: new Date().toISOString().slice(0, 16).replace("T", " "),
-    };
-
-    setDispatches((currentDispatches) => [dispatchRecord, ...currentDispatches]);
+    updateResourceRequestStatus(selectedRequest.id, "APPROVED");
+    createDispatchForRequest(selectedRequest);
     setNotice(
       `Request ${selectedRequest.id} approved and a dispatch has been prepared for ${selectedRequest.district}.`
     );
@@ -447,16 +429,7 @@ export default function ResourcesPage() {
       return;
     }
 
-    const updatedRequest: ResourceRequest = {
-      ...selectedRequest,
-      status: "REJECTED",
-    };
-
-    setRequests((currentRequests) =>
-      currentRequests.map((request) =>
-        request.id === selectedRequest.id ? updatedRequest : request
-      )
-    );
+    updateResourceRequestStatus(selectedRequest.id, "REJECTED");
 
     setNotice(`Request ${selectedRequest.id} rejected and closed for follow-up.`);
     setSelectedRequest(null);

@@ -1,60 +1,16 @@
 "use client";
 
-export type Incident = {
-  id: string;
-  title: string;
-  district: string;
-  description: string;
-  severity: "High" | "Medium";
-  reported: string;
-  status: "ACTIVE";
-  recommendedResponse: string;
-};
+import type { Incident } from "@/lib/operational-store";
 
-const incidents: Incident[] = [
-  {
-    id: "flood-lakhimpur",
-    title: "Flooding reported — Lakhimpur, Assam",
-    district: "Lakhimpur, Assam",
-    description:
-      "Water levels rising near riverbank; low-lying areas advised to evacuate.",
-    severity: "High",
-    reported: "5 minutes ago",
-    status: "ACTIVE",
-    recommendedResponse:
-      "Deploy rescue teams and drinking water supplies. Coordinate immediate district-level emergency response.",
-  },
-  {
-    id: "illness-tinsukia",
-    title: "Febrile illness cluster — Tinsukia District",
-    district: "Tinsukia, Assam",
-    description:
-      "12 patients with fever and respiratory symptoms; samples pending.",
-    severity: "Medium",
-    reported: "1 hour ago",
-    status: "ACTIVE",
-    recommendedResponse:
-      "Deploy medical officers and medicine kits. Coordinate rapid diagnostic testing and contact tracing.",
-  },
-  {
-    id: "bridge-dibrugarh",
-    title: "Bridge damage — NH-37 near Dibrugarh",
-    district: "Dibrugarh, Assam",
-    description:
-      "Structural damage reported; route closed for heavy vehicles.",
-    severity: "High",
-    reported: "2 hours ago",
-    status: "ACTIVE",
-    recommendedResponse:
-      "Deploy rescue and infrastructure assessment teams. Coordinate with district administration regarding route safety.",
-  },
-];
+export type { Incident } from "@/lib/operational-store";
 
 type IncidentFeedProps = {
+  incidents: Incident[];
   onCreateResourceRequest: (incident: Incident) => void;
 };
 
 export default function IncidentFeed({
+  incidents,
   onCreateResourceRequest,
 }: IncidentFeedProps) {
   return (

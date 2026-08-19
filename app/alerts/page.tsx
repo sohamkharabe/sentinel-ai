@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
+import { useOperationalStore } from "@/lib/operational-store";
 
 type AlertSeverity = "CRITICAL" | "HIGH" | "MODERATE";
 type AlertStatus =
@@ -19,6 +20,7 @@ type AlertSource =
 
 type Alert = {
   id: string;
+  incidentId?: string;
   title: string;
   district: string;
   severity: AlertSeverity;
@@ -453,6 +455,8 @@ const initialAlerts: Alert[] = [
   },
 ];
 
+void initialAlerts;
+
 const getSeverityClasses = (severity: AlertSeverity) => {
   switch (severity) {
     case "CRITICAL":
@@ -506,7 +510,7 @@ const getTimelineByStatus = (status: AlertStatus) => {
 
 export default function AlertsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
+  const { alerts, createResourceRequest, updateAlert } = useOperationalStore();
   const [districtFilter, setDistrictFilter] = useState<(typeof DISTRICT_OPTIONS)[number]>("All Districts");
   const [severityFilter, setSeverityFilter] = useState<(typeof SEVERITY_OPTIONS)[number]>("All Severity");
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_OPTIONS)[number]>("All Status");
@@ -574,11 +578,7 @@ export default function AlertsPage() {
       return;
     }
 
-    setAlerts((currentAlerts) =>
-      currentAlerts.map((alert) =>
-        alert.id === selectedAlert.id ? { ...alert, status: nextStatus } : alert
-      )
-    );
+    updateAlert(selectedAlert.id, { status: nextStatus });
 
     setSelectedAlert((current) =>
       current ? { ...current, status: nextStatus } : null
@@ -592,11 +592,7 @@ export default function AlertsPage() {
       return;
     }
 
-    setAlerts((currentAlerts) =>
-      currentAlerts.map((alert) =>
-        alert.id === selectedAlert.id ? { ...alert, assignedTeam: teamDraft } : alert
-      )
-    );
+    updateAlert(selectedAlert.id, { assignedTeam: teamDraft });
 
     setSelectedAlert((current) =>
       current ? { ...current, assignedTeam: teamDraft } : null
@@ -610,7 +606,21 @@ export default function AlertsPage() {
       return;
     }
 
-    setConfirmation(`Resource response prepared for ${selectedAlert.title}.`);
+    const { created } = createResourceRequest({
+      alertId: selectedAlert.id,
+      incidentId: selectedAlert.incidentId,
+      district: selectedAlert.district,
+      incident: selectedAlert.title,
+      priority: selectedAlert.priority,
+      requestedResources: "Emergency response resources — pending allocation",
+      authority: selectedAlert.assignedTeam,
+    });
+
+    setConfirmation(
+      created
+        ? `Resource response prepared for ${selectedAlert.title}.`
+        : `A resource response already exists for ${selectedAlert.title}.`
+    );
   };
 
   const getLifecycleActions = (status: AlertStatus) => {

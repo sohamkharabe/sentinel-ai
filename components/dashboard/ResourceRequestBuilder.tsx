@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Incident } from "./IncidentFeed";
+import { useOperationalStore } from "@/lib/operational-store";
 
 type Priority = "Critical" | "High" | "Moderate";
 
@@ -51,11 +52,14 @@ const resources: Resource[] = [
 
 type ResourceRequestBuilderProps = {
   incident?: Incident | null;
+  alertId?: string;
 };
 
 export default function ResourceRequestBuilder({
   incident,
+  alertId,
 }: ResourceRequestBuilderProps) {
+  const { createResourceRequest } = useOperationalStore();
   // Priority state holds the user-selected priority when the user overrides
   // automatic behaviour. When no manual override is active, the effective
   // priority is derived from the `incident` prop.
@@ -107,7 +111,14 @@ export default function ResourceRequestBuilder({
   };
 
   const handleGenerateDispatch = () => {
-    const dispatchRequest = {
+    const requestedResources = resources
+      .filter((resource) => selected[resource.id])
+      .map((resource) => `${resource.name} ×${selected[resource.id]}`)
+      .join("; ");
+
+    const { request, created } = createResourceRequest({
+      alertId,
+      incidentId: incident?.id,
       incident:
         incident?.title ??
         "Manual emergency request",
@@ -116,26 +127,17 @@ export default function ResourceRequestBuilder({
         incident?.district ??
         "Lakhimpur, Assam",
 
-      priority,
+      priority: effectivePriority.toUpperCase() as "CRITICAL" | "HIGH" | "MODERATE",
 
       authority,
 
-      resources: selected,
-
-      recommendedResponse:
-        incident?.recommendedResponse ?? null,
-    };
-
-    console.log(
-      "DISPATCH REQUEST:",
-      dispatchRequest
-    );
+      requestedResources,
+    });
 
     alert(
       `Dispatch prepared for ${
-        incident?.district ??
-        "Lakhimpur, Assam"
-      }\n\nAuthority: ${authority}\nPriority: ${priority}`
+        request.district
+      }\n\nAuthority: ${authority}\nPriority: ${request.priority}${created ? "" : "\n\nAn existing request is already linked to this alert."}`
     );
   };
 
