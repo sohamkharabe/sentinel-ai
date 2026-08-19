@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
+import { useOperationalStore, type Alert, type Dispatch, type Incident, type ResourceRequest } from "@/lib/operational-store";
 
 type District =
   | "Lakhimpur"
@@ -11,11 +12,11 @@ type District =
   | "Sivasagar"
   | "Sonitpur";
 
-type ReportType = "District Risk" | "Incident" | "Disease Surveillance" | "Resource";
+type ReportType = "District Risk" | "Incident" | "Disease Surveillance" | "Resource" | "Alert" | "Dispatch";
 type ReportStatus = "Ready" | "Pending" | "Archived";
 
 type Report = {
-  id: number;
+  id: string | number;
   title: string;
   district: District;
   type: ReportType;
@@ -40,102 +41,94 @@ const REPORT_TYPE_OPTIONS = [
   "Incident",
   "Disease Surveillance",
   "Resource",
+  "Alert",
+  "Dispatch",
 ] as const;
 
 const STATUS_OPTIONS = ["All Status", "Ready", "Pending", "Archived"] as const;
 
-const INITIAL_REPORTS: Report[] = [
-  {
-    id: 1,
-    title: "Monsoon Risk Assessment",
-    district: "Lakhimpur",
-    type: "District Risk",
-    status: "Ready",
-    date: "2026-08-10",
-    summary:
-      "Flood-prone pockets identified along key drainage channels with elevated risk across low-lying communities and transport corridors.",
-  },
-  {
-    id: 2,
-    title: "Industrial Fire Incident",
-    district: "Tinsukia",
-    type: "Incident",
-    status: "Pending",
-    date: "2026-08-09",
-    summary:
-      "Response teams have been dispatched to a reported storage facility fire; containment and air quality monitoring remain active.",
-  },
-  {
-    id: 3,
-    title: "Malaria Surveillance Snapshot",
-    district: "Dibrugarh",
-    type: "Disease Surveillance",
-    status: "Ready",
-    date: "2026-08-08",
-    summary:
-      "Case clusters were reviewed in border and riverine settlements, with proactive vector-control measures scheduled for the next cycle.",
-  },
-  {
-    id: 4,
-    title: "Medical Supply Distribution",
-    district: "Jorhat",
-    type: "Resource",
-    status: "Ready",
-    date: "2026-08-07",
-    summary:
-      "Allocation plan approved for rural health centers and mobile units to replenish trauma kits and essential medicines.",
-  },
-  {
-    id: 5,
-    title: "Landslide Impact Review",
-    district: "Sivasagar",
-    type: "District Risk",
-    status: "Archived",
-    date: "2026-08-06",
-    summary:
-      "Earlier landslide vulnerability review has been archived after completion of mitigation and community risk communication measures.",
-  },
-  {
-    id: 6,
-    title: "Road Accident Response Summary",
-    district: "Sonitpur",
-    type: "Incident",
-    status: "Ready",
-    date: "2026-08-05",
-    summary:
-      "Comprehensive review of emergency coordination and patient transfer timing across district access routes and referral points.",
-  },
-  {
-    id: 7,
-    title: "Dengue Alert Review",
-    district: "Tinsukia",
-    type: "Disease Surveillance",
-    status: "Pending",
-    date: "2026-08-04",
-    summary:
-      "Health workers are validating household reporting and preparing targeted inspections in the affected neighborhood clusters.",
-  },
-  {
-    id: 8,
-    title: "Relief Stock Allocation",
-    district: "Lakhimpur",
-    type: "Resource",
-    status: "Ready",
-    date: "2026-08-03",
-    summary:
-      "Temporary shelters and emergency stockpiles were aligned with district needs and delivery timing across priority settlements.",
-  },
-  {
-    id: 9,
-    title: "Heat Stress Monitoring",
-    district: "Dibrugarh",
-    type: "District Risk",
-    status: "Pending",
-    date: "2026-08-02",
-    summary:
-      "Daily exposure risk remains elevated across outdoor work clusters and vulnerable populations, requiring targeted monitoring.",
-  },
-];
+const districtName = (district: string) => district.split(",")[0].trim();
+
+const activeOperationalStatus = (status: string) => !["RESOLVED", "CLOSED", "COMPLETED", "REJECTED"].includes(status);
+
+const deriveReports = (
+  incidents: Incident[],
+  alerts: Alert[],
+  resourceRequests: ResourceRequest[],
+  dispatches: Dispatch[],
+): Report[] => {
+  const reports: Report[] = [];
+  const alertByIncident = new Map(alerts.filter((alert) => alert.incidentId).map((alert) => [alert.incidentId, alert]));
+
+  incidents.forEach((incident) => {
+    const alert = alertByIncident.get(incident.id);
+    reports.push({
+      id: `INCIDENT-${incident.id}`,
+      title: `${incident.title} Report`,
+      district: districtName(incident.district) as District,
+      type: "Incident",
+      status: alert && !activeOperationalStatus(alert.status) ? "Archived" : "Pending",
+      date: alert?.createdAt ?? new Date().toISOString().slice(0, 10),
+      summary: `${incident.description} Recommended response: ${incident.recommendedResponse}`,
+    });
+  });
+
+  alerts.forEach((alert) => {
+    const type: ReportType = alert.source === "Disease Surveillance" ? "Disease Surveillance" : "Alert";
+    reports.push({
+      id: `ALERT-${alert.id}`,
+      title: `${alert.title} Report`,
+      district: districtName(alert.district) as District,
+      type,
+      status: activeOperationalStatus(alert.status) ? "Ready" : "Archived",
+      date: alert.createdAt,
+      summary: `${alert.description} Recommended response: ${alert.recommendedResponse}`,
+    });
+  });
+
+  const riskAlertsByDistrict = new Map<string, Alert[]>();
+  alerts.filter((alert) => activeOperationalStatus(alert.status) && ["CRITICAL", "HIGH"].includes(alert.severity)).forEach((alert) => {
+    const district = districtName(alert.district);
+    riskAlertsByDistrict.set(district, [...(riskAlertsByDistrict.get(district) ?? []), alert]);
+  });
+  riskAlertsByDistrict.forEach((districtAlerts, district) => {
+    reports.push({
+      id: `RISK-${district}`,
+      title: `${district} District Risk Assessment`,
+      district: district as District,
+      type: "District Risk",
+      status: "Ready",
+      date: districtAlerts[0].createdAt,
+      summary: `${districtAlerts.length} active high-risk alert${districtAlerts.length === 1 ? "" : "s"} indicate elevated operational pressure. Review: ${districtAlerts.map((alert) => alert.title).join("; ")}.`,
+    });
+  });
+
+  resourceRequests.forEach((request) => {
+    reports.push({
+      id: `RESOURCE-${request.id}`,
+      title: `${request.incident} Resource Report`,
+      district: districtName(request.district) as District,
+      type: "Resource",
+      status: request.status === "PENDING" ? "Pending" : request.status === "REJECTED" || request.status === "COMPLETED" ? "Archived" : "Ready",
+      date: request.createdAt,
+      summary: `${request.requestedResources} requested by ${request.authority}. Current request status: ${request.status}.`,
+    });
+  });
+
+  dispatches.forEach((dispatch) => {
+    reports.push({
+      id: `DISPATCH-${dispatch.id}`,
+      title: `${dispatch.district} Dispatch Report`,
+      district: districtName(dispatch.district) as District,
+      type: "Dispatch",
+      status: dispatch.status === "COMPLETED" ? "Archived" : "Ready",
+      date: dispatch.lastUpdated,
+      summary: `${dispatch.resources} deployment is ${dispatch.status.toLowerCase()} at ${dispatch.progress}% progress. ETA: ${dispatch.eta}.`,
+    });
+  });
+
+  return reports;
+};
 
 const getStatusClasses = (status: ReportStatus) => {
   switch (status) {
@@ -151,13 +144,19 @@ const getStatusClasses = (status: ReportStatus) => {
 };
 
 export default function ReportsPage() {
+  const { incidents, alerts, resourceRequests, dispatches } = useOperationalStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [districtFilter, setDistrictFilter] = useState<(typeof DISTRICT_OPTIONS)[number]>("All Districts");
   const [reportTypeFilter, setReportTypeFilter] = useState<(typeof REPORT_TYPE_OPTIONS)[number]>("All Reports");
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_OPTIONS)[number]>("All Status");
-  const [reports, setReports] = useState<Report[]>(INITIAL_REPORTS);
+  const [generatedReports, setGeneratedReports] = useState<Report[]>([]);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [notice, setNotice] = useState("");
+
+  const reports = useMemo(
+    () => [...generatedReports, ...deriveReports(incidents, alerts, resourceRequests, dispatches)],
+    [alerts, dispatches, generatedReports, incidents, resourceRequests],
+  );
 
   const filteredReports = useMemo(() => {
     return reports.filter((report) => {
@@ -194,7 +193,7 @@ export default function ReportsPage() {
       summary: `Draft report generated from the active filters for ${draftDistrict} and ${draftType}. This entry is queued for review and approval before publication.`,
     };
 
-    setReports((currentReports) => [draftReport, ...currentReports]);
+    setGeneratedReports((currentReports) => [draftReport, ...currentReports]);
     setNotice(`Generated: ${draftReport.title} is now pending review.`);
   };
 
