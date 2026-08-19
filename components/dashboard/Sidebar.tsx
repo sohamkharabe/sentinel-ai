@@ -2,168 +2,83 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  Bell,
+  FileBarChart,
+  HeartPulse,
+  LayoutDashboard,
+  Map,
+  Package,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  UsersRound,
+  X,
+} from "lucide-react";
 
-type SidebarProps = {
-  onNavigate?: () => void;
-};
+type SidebarProps = { onNavigate?: () => void; desktop?: boolean };
 
 const navigation = [
-  {
-    label: "Dashboard",
-    href: "/dashboard",
-  },
-  {
-    label: "Disease Map",
-    href: "/disease-map",
-  },
-  {
-    label: "Reports",
-    href: "/reports",
-  },
-  {
-    label: "ASHA Workers",
-    href: "/asha-workers",
-  },
-  {
-    label: "Resources",
-    href: "/resources",
-  },
-  {
-    label: "Alerts",
-    href: "/alerts",
-  },
-  {
-    label: "AI Insights",
-    href: "/ai-insights",
-  },
-  {
-    label: "Settings",
-    href: "/settings",
-  },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Disease Map", href: "/disease-map", icon: Map },
+  { label: "Reports", href: "/reports", icon: FileBarChart },
+  { label: "ASHA Workers", href: "/asha-workers", icon: UsersRound },
+  { label: "Resources", href: "/resources", icon: Package },
+  { label: "Alerts", href: "/alerts", icon: Bell },
+  { label: "AI Insights", href: "/ai-insights", icon: Sparkles },
 ];
 
-export default function Sidebar({ onNavigate }: SidebarProps) {
+export default function Sidebar({ onNavigate, desktop = false }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside
-      className="
-        fixed
-        inset-y-0
-        left-0
-        z-1000
-        flex
-        h-screen
-        w-90
-        flex-col
-        overflow-hidden
-        border-r-2
-        border-slate-300
-        bg-white
-        shadow-2xl
-      "
-    >
-      {/* ================================================= */}
-      {/* BRAND */}
-      {/* ================================================= */}
-
-      <div className="shrink-0 border-b-2 border-slate-300 px-7 py-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-xl font-extrabold tracking-tight text-slate-950">
-              SURAKSHA SAARTHI
-            </div>
-
-            <div className="mt-1 text-sm font-bold uppercase tracking-wide text-slate-600">
-              Emergency Response Platform
-            </div>
+    <aside className={`${desktop ? "hidden lg:flex" : "flex"} fixed inset-y-0 left-0 z-1000 h-screen w-[280px] flex-col overflow-hidden border-r border-slate-200 bg-white shadow-xl shadow-slate-900/5`}>
+      <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-700 text-white shadow-sm">
+            <ShieldCheck className="h-5 w-5" />
           </div>
-
-          {/* CLOSE BUTTON */}
-          <button
-            type="button"
-            onClick={onNavigate}
-            aria-label="Close navigation"
-            className="
-              flex
-              h-11
-              w-11
-              shrink-0
-              items-center
-              justify-center
-              rounded-md
-              border-2
-              border-slate-300
-              bg-white
-              text-xl
-              font-extrabold
-              text-slate-950
-              transition
-              hover:bg-slate-100
-            "
-          >
-            ×
-          </button>
+          <div>
+            <div className="text-sm font-extrabold tracking-tight text-slate-950">SURAKSHA SAARTHI</div>
+            <div className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Emergency Response</div>
+          </div>
         </div>
+        <button type="button" onClick={onNavigate} aria-label="Close navigation" className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 lg:hidden">
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
-      {/* ================================================= */}
-      {/* NAVIGATION */}
-      {/* ================================================= */}
-
-      <nav className="min-h-0 flex-1 overflow-y-auto px-5 py-6">
-        <p className="mb-5 px-2 text-base font-extrabold uppercase tracking-wider text-slate-700">
-          Navigation
-        </p>
-
-        <div className="space-y-2">
+      <nav className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
+        <p className="mb-3 px-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Main</p>
+        <div className="space-y-1">
           {navigation.map((item) => {
-            const isActive = item.href === '/dashboard'
-              ? pathname === '/dashboard' && item.label === 'Dashboard'
-              : pathname === item.href;
-
+            const isActive = pathname === item.href;
+            const Icon = item.icon;
             return (
-              <Link
-                key={item.label}
-                href={item.href}
-                onClick={onNavigate}
-                className={`
-                  flex
-                  min-h-14
-                  items-center
-                  rounded-md
-                  border-2
-                  px-5
-                  text-lg
-                  font-bold
-                  transition-colors
-                  ${
-                    isActive
-                      ? "border-blue-700 bg-blue-700 text-white"
-                      : "border-transparent text-slate-900 hover:border-slate-300 hover:bg-slate-100"
-                  }
-                `}
-              >
+              <Link key={item.label} href={item.href} onClick={onNavigate} className={`group relative flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-semibold transition ${isActive ? "bg-emerald-50 text-emerald-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}>
+                {isActive && <span className="absolute left-0 h-6 w-1 rounded-r-full bg-emerald-600" />}
+                <Icon className={`h-[18px] w-[18px] ${isActive ? "text-emerald-700" : "text-slate-400 group-hover:text-slate-600"}`} strokeWidth={1.8} />
                 {item.label}
               </Link>
             );
           })}
         </div>
+        <p className="mb-3 mt-8 px-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Management</p>
+        <Link href="/settings" onClick={onNavigate} className={`flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-semibold transition ${pathname === "/settings" ? "bg-emerald-50 text-emerald-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}>
+          <Settings className="h-[18px] w-[18px] text-slate-400" strokeWidth={1.8} />
+          Settings
+        </Link>
       </nav>
 
-      {/* ================================================= */}
-      {/* FOOTER */}
-      {/* ================================================= */}
-
-      <div className="shrink-0 border-t-2 border-slate-300 p-5">
-        <div className="rounded-md border-2 border-slate-300 bg-slate-50 p-5">
-          <div className="text-base font-extrabold text-slate-950">
-            Operations Console
-          </div>
-
-          <div className="mt-1 text-sm font-semibold text-slate-700">
-            Northeast India
-          </div>
+      <div className="shrink-0 space-y-4 border-t border-slate-100 p-4">
+        <div className="rounded-2xl bg-emerald-900 p-4 text-white">
+          <div className="flex items-center gap-2 text-sm font-bold"><HeartPulse className="h-4 w-4 text-emerald-300" /> Stay prepared</div>
+          <p className="mt-2 text-xs leading-5 text-emerald-100">Real-time monitoring for a safer Northeast India.</p>
+          <p className="mt-3 text-xs font-bold text-emerald-200">Operational readiness</p>
+        </div>
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-700 text-xs font-extrabold text-white">SS</div>
+          <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-900">Soham Sharma</p><p className="truncate text-[11px] text-slate-500">Operations Admin</p></div>
         </div>
       </div>
     </aside>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Menu, Search } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { useOperationalStore } from "@/lib/operational-store";
 
@@ -324,41 +325,41 @@ const getInventoryStatus = (available: number, minimumStock: number): InventoryS
 const getStatusClasses = (status: InventoryStatus) => {
   switch (status) {
     case "LOW STOCK":
-      return "border border-red-500 bg-red-50 text-red-700";
+      return "table-status-badge text-red-700";
     case "OUT OF STOCK":
-      return "border border-red-800 bg-red-100 text-red-900";
+      return "table-status-badge text-red-900";
     case "NORMAL":
-      return "border border-emerald-600 bg-emerald-50 text-emerald-700";
+      return "table-status-badge text-emerald-700";
     default:
-      return "border border-slate-300 bg-slate-100 text-slate-700";
+      return "table-status-badge text-slate-700";
   }
 };
 
 const getDispatchStatusClasses = (status: Dispatch["status"]) => {
   switch (status) {
     case "PREPARING":
-      return "border border-amber-500 bg-amber-50 text-amber-700";
+      return "table-status-badge text-amber-700";
     case "IN TRANSIT":
-      return "border border-blue-500 bg-blue-50 text-blue-700";
+      return "table-status-badge text-blue-700";
     case "ON SITE":
-      return "border border-emerald-600 bg-emerald-50 text-emerald-700";
+      return "table-status-badge text-emerald-700";
     case "COMPLETED":
-      return "border border-slate-500 bg-slate-100 text-slate-700";
+      return "table-status-badge text-slate-700";
     default:
-      return "border border-slate-300 bg-slate-100 text-slate-700";
+      return "table-status-badge text-slate-700";
   }
 };
 
 const getPriorityClasses = (priority: ResourceRequest["priority"]) => {
   switch (priority) {
     case "CRITICAL":
-      return "text-red-700";
+      return "table-severity-critical text-red-700";
     case "HIGH":
-      return "text-orange-700";
+      return "table-severity-high text-orange-700";
     case "MODERATE":
-      return "text-yellow-700";
+      return "table-severity-moderate text-yellow-700";
     default:
-      return "text-slate-700";
+      return "table-severity-moderate text-slate-700";
   }
 };
 
@@ -457,7 +458,7 @@ export default function ResourcesPage() {
               onClick={() => setIsSidebarOpen(true)}
               className="flex h-11 w-11 items-center justify-center rounded-md border-2 border-slate-300 bg-white text-xl font-extrabold text-slate-950"
             >
-              ☰
+              <Menu className="h-5 w-5" />
             </button>
             <div>
               <h1 className="text-xl font-extrabold text-slate-950">SURAKSHA SAARTHI</h1>
@@ -470,7 +471,7 @@ export default function ResourcesPage() {
               type="button"
               className="rounded-md border-2 border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-950"
             >
-              Search
+              <Search className="mr-2 inline h-4 w-4" /> Search
             </button>
             <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-slate-300 bg-slate-100 text-sm font-extrabold text-slate-950">
               SS

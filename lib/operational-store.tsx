@@ -2,7 +2,9 @@
 
 import {
   createContext,
+  startTransition,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from "react";
@@ -19,6 +21,8 @@ export type Incident = {
 };
 
 type NewIncident = Incident;
+
+const OPERATIONAL_STATE_STORAGE_KEY = "suraksha-saarthi-operational-state-v1";
 
 export type AlertSeverity = "CRITICAL" | "HIGH" | "MODERATE";
 export type AlertStatus = "NEW" | "ACKNOWLEDGED" | "MONITORING" | "ESCALATED" | "RESOLVED" | "CLOSED";
@@ -132,6 +136,17 @@ type OperationalStore = {
   createDispatchForRequest: (request: ResourceRequest) => Dispatch | undefined;
 };
 
+type PersistedOperationalState = Pick<OperationalStore, "incidents" | "alerts" | "resourceRequests" | "dispatches">;
+
+const isPersistedOperationalState = (value: unknown): value is PersistedOperationalState => {
+  if (!value || typeof value !== "object") return false;
+
+  const state = value as Partial<PersistedOperationalState>;
+  return [state.incidents, state.alerts, state.resourceRequests, state.dispatches].every(
+    (records) => Array.isArray(records) && records.every((record) => record && typeof record === "object" && typeof record.id === "string"),
+  );
+};
+
 const OperationalStoreContext = createContext<OperationalStore | null>(null);
 
 const incidentPriority = (severity: Incident["severity"]): AlertSeverity => severity === "High" ? "HIGH" : "MODERATE";
@@ -141,6 +156,41 @@ export function OperationalStoreProvider({ children }: { children: ReactNode }) 
   const [alerts, setAlerts] = useState(initialAlerts);
   const [resourceRequests, setResourceRequests] = useState(initialResourceRequests);
   const [dispatches, setDispatches] = useState(initialDispatches);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const storedValue = window.localStorage.getItem(OPERATIONAL_STATE_STORAGE_KEY);
+      if (storedValue) {
+        const parsedValue: unknown = JSON.parse(storedValue);
+        if (isPersistedOperationalState(parsedValue)) {
+          startTransition(() => {
+            setIncidents(parsedValue.incidents);
+            setAlerts(parsedValue.alerts);
+            setResourceRequests(parsedValue.resourceRequests);
+            setDispatches(parsedValue.dispatches);
+            setIsHydrated(true);
+          });
+          return;
+        }
+      }
+    } catch {
+      // Invalid or unavailable browser storage falls back to seeded fixtures.
+    }
+
+    startTransition(() => setIsHydrated(true));
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const state: PersistedOperationalState = { incidents, alerts, resourceRequests, dispatches };
+    try {
+      window.localStorage.setItem(OPERATIONAL_STATE_STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // Storage quota and privacy-mode failures do not interrupt operations.
+    }
+  }, [alerts, dispatches, incidents, isHydrated, resourceRequests]);
 
   const ensureAlertForIncidentRecord = (incident: Incident, currentAlerts: Alert[]) => {
     const existing = currentAlerts.find((alert) => alert.incidentId === incident.id);

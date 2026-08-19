@@ -2,8 +2,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f6f8f7;
+  --foreground: #15231f;
+  --surface: #ffffff;
+  --border: #e2e9e5;
+  --muted: #65756f;
+  --brand: #087f5b;
+  --brand-dark: #075c44;
 }
 
 /* Map theme variables into CSS custom properties for broader tool compatibility */
@@ -14,15 +19,90 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: #b8ead8;
+  color: #063d2d;
+}
+
+/* Shared visual language for the existing page surfaces. */
+.border-2 {
+  border-width: 1px;
+}
+
+.border-slate-300 {
+  border-color: #e2e9e5;
+}
+
+.border-slate-200 {
+  border-color: #e8eeeb;
+}
+
+.rounded-lg {
+  border-radius: 1rem;
+}
+
+.rounded-md {
+  border-radius: 0.75rem;
+}
+
+.shadow-sm {
+  box-shadow: 0 8px 24px rgba(30, 55, 45, 0.05);
+}
+
+header.sticky {
+  border-bottom-width: 1px;
+  border-color: #e2e9e5;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+}
+
+.table-type-label,
+.table-severity-critical,
+.table-severity-high,
+.table-severity-moderate,
+.table-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.table-type-label::before {
+  content: "";
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 0.25rem;
+  background: currentColor;
+  opacity: 0.14;
+}
+
+.table-severity-critical::before,
+.table-severity-high::before,
+.table-severity-moderate::before,
+.table-status-badge::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.table-status-badge {
+  border-radius: 999px;
+  background: #f1f5f3;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
 }

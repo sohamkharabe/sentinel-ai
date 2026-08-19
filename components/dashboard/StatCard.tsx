@@ -14,22 +14,22 @@ export default function StatCard({
   trendColor = "text-slate-700",
 }: StatCardProps) {
   return (
-    <div className="rounded-lg border-2 border-slate-300 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(30,55,45,0.05)]">
 
       <div className="flex items-start justify-between">
 
         <div>
-          <p className="text-base font-bold text-slate-700">
+          <p className="text-sm font-semibold text-slate-600">
             {title}
           </p>
 
-          <p className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">
+          <p className="mt-3 text-3xl font-extrabold tracking-tight text-slate-950">
             {value}
           </p>
         </div>
 
         {icon && (
-          <div className="flex h-12 w-12 items-center justify-center">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50">
             {icon}
           </div>
         )}
@@ -37,7 +37,7 @@ export default function StatCard({
       </div>
 
       {trend && (
-        <div className={`mt-4 text-sm font-extrabold ${trendColor}`}>
+        <div className={`mt-4 text-xs font-bold ${trendColor}`}>
           {trend}
         </div>
       )}

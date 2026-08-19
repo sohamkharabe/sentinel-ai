@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Bell, ClipboardClock, FileWarning, Menu, Search, ShieldAlert } from "lucide-react";
 import { useOperationalStore, type Alert, type Incident } from "@/lib/operational-store";
 
 import Sidebar from "@/components/dashboard/Sidebar";
@@ -14,7 +15,11 @@ export default function DashboardPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
-  const { incidents, ensureAlertForIncident } = useOperationalStore();
+  const { incidents, alerts, resourceRequests, dispatches, ensureAlertForIncident } = useOperationalStore();
+  const activeAlerts = alerts.filter((alert) => !["RESOLVED", "CLOSED"].includes(alert.status));
+  const highRiskDistricts = new Set(activeAlerts.filter((alert) => ["CRITICAL", "HIGH"].includes(alert.severity)).map((alert) => alert.district)).size;
+  const pendingRequests = resourceRequests.filter((request) => request.status === "PENDING").length;
+  const activeDispatches = dispatches.filter((dispatch) => dispatch.status !== "COMPLETED").length;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -98,9 +103,7 @@ export default function DashboardPage() {
                 transition
                 hover:bg-slate-100
               "
-            >
-              ☰
-            </button>
+            ><span className="sr-only">Open navigation</span><Menu className="h-5 w-5" /></button>
 
             <div>
               <h1 className="text-xl font-extrabold text-slate-950">
@@ -134,7 +137,7 @@ export default function DashboardPage() {
                 transition
                 hover:bg-slate-100
               "
-            >
+            ><Search className="mr-2 inline h-4 w-4" />
               Search
             </button>
 
@@ -192,25 +195,11 @@ export default function DashboardPage() {
             {/* ACTIVE CASES */}
 
             <StatCard
-              title="Active Cases"
-              value={1234}
-              icon={
-                <svg
-                  className="h-8 w-8 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-                  />
-                </svg>
-              }
-              trend="+8.4%"
-              trendColor="text-red-600"
+              title="Active Alerts"
+              value={activeAlerts.length}
+              icon={<Bell className="h-5 w-5 text-red-600" />}
+              trend="Live operational state"
+              trendColor="text-emerald-700"
             />
 
 
@@ -218,23 +207,9 @@ export default function DashboardPage() {
 
             <StatCard
               title="High Risk Districts"
-              value={12}
-              icon={
-                <svg
-                  className="h-8 w-8 text-orange-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              }
-              trend="+2"
+              value={highRiskDistricts}
+              icon={<ShieldAlert className="h-5 w-5 text-orange-600" />}
+              trend="Active alerts"
               trendColor="text-orange-600"
             />
 
@@ -242,24 +217,10 @@ export default function DashboardPage() {
             {/* FLOOD ALERTS */}
 
             <StatCard
-              title="Flood Alerts"
-              value={3}
-              icon={
-                <svg
-                  className="h-8 w-8 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M3 10h4l3 10h4l3-16h4"
-                  />
-                </svg>
-              }
-              trend="-1"
+              title="Active Incidents"
+              value={incidents.length}
+              icon={<FileWarning className="h-5 w-5 text-blue-600" />}
+              trend="Field operations"
               trendColor="text-blue-600"
             />
 
@@ -267,24 +228,10 @@ export default function DashboardPage() {
             {/* RESOURCES PENDING */}
 
             <StatCard
-              title="Resources Pending"
-              value={27}
-              icon={
-                <svg
-                  className="h-8 w-8 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 12l5 5L20 7"
-                  />
-                </svg>
-              }
-              trend="+5%"
+              title="Pending Requests"
+              value={pendingRequests}
+              icon={<ClipboardClock className="h-5 w-5 text-emerald-600" />}
+              trend={`${activeDispatches} active dispatches`}
               trendColor="text-green-600"
             />
 

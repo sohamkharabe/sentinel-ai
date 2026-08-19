@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Menu, Search } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { useOperationalStore, type Alert, type Dispatch, type Incident, type ResourceRequest } from "@/lib/operational-store";
 
@@ -166,43 +167,39 @@ const operationalInsights = (
 const getTypeClasses = (type: InsightType) => {
   switch (type) {
     case "Disease Anomaly":
-      return "border border-red-500 bg-red-50 text-red-700";
+      return "table-type-label text-red-700";
     case "Flood Risk":
-      return "border border-blue-500 bg-blue-50 text-blue-700";
+      return "table-type-label text-blue-700";
     case "Resource Shortage":
-      return "border border-orange-500 bg-orange-50 text-orange-700";
+      return "table-type-label text-orange-700";
     case "Incident Cluster":
-      return "border border-violet-500 bg-violet-50 text-violet-700";
+      return "table-type-label text-violet-700";
     default:
-      return "border border-slate-300 bg-slate-100 text-slate-700";
+      return "table-type-label text-slate-700";
   }
 };
 
 const getPriorityClasses = (priority: InsightPriority) => {
   switch (priority) {
     case "Critical":
-      return "border border-red-600 bg-red-50 text-red-700";
+      return "table-severity-critical text-red-700";
     case "High":
-      return "border border-orange-600 bg-orange-50 text-orange-700";
+      return "table-severity-high text-orange-700";
     case "Moderate":
-      return "border border-yellow-600 bg-yellow-50 text-yellow-800";
+      return "table-severity-moderate text-yellow-800";
     default:
-      return "border border-slate-300 bg-slate-100 text-slate-700";
+      return "table-severity-moderate text-slate-700";
   }
 };
 
 const getStatusClasses = (status: InsightStatus) => {
   switch (status) {
     case "NEW":
-      return "border border-sky-500 bg-sky-50 text-sky-700";
     case "MONITORING":
-      return "border border-violet-500 bg-violet-50 text-violet-700";
     case "ACTIONED":
-      return "border border-blue-500 bg-blue-50 text-blue-700";
     case "RESOLVED":
-      return "border border-emerald-600 bg-emerald-50 text-emerald-700";
     default:
-      return "border border-slate-300 bg-slate-100 text-slate-700";
+      return "table-status-badge text-slate-700";
   }
 };
 
@@ -300,7 +297,7 @@ export default function AIInsightsPage() {
               aria-label="Open navigation"
               className="flex h-11 w-11 items-center justify-center rounded-md border-2 border-slate-300 bg-white text-xl font-extrabold text-slate-950 transition hover:bg-slate-100"
             >
-              ☰
+              <Menu className="h-5 w-5" />
             </button>
             <div>
               <h1 className="text-xl font-extrabold text-slate-950">SURAKSHA SAARTHI</h1>
@@ -313,7 +310,7 @@ export default function AIInsightsPage() {
               type="button"
               className="rounded-md border-2 border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-slate-100"
             >
-              Search
+              <Search className="mr-2 inline h-4 w-4" /> Search
             </button>
             <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-slate-300 bg-slate-100 text-sm font-extrabold text-slate-950">
               SS
@@ -474,9 +471,9 @@ export default function AIInsightsPage() {
                           <button
                             type="button"
                             onClick={() => setSelectedInsight(insight)}
-                            className="rounded-md border-2 border-slate-300 bg-white px-3 py-2 text-xs font-extrabold uppercase tracking-wide text-slate-900 transition hover:bg-slate-100"
+                            className="text-xs font-bold text-emerald-700 transition hover:text-emerald-900"
                           >
-                            VIEW
+                            View <span aria-hidden="true">→</span>
                           </button>
                         </td>
                       </tr>

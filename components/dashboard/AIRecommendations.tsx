@@ -1,5 +1,7 @@
 "use client";
 
+import { Sparkles } from "lucide-react";
+
 const recommendations = [
   {
     title: "Deploy 2 mobile medical units to Dibrugarh",
@@ -23,9 +25,9 @@ const recommendations = [
 
 export default function AIRecommendations() {
   return (
-    <section className="overflow-hidden rounded-lg border-2 border-slate-300 bg-white shadow-sm">
+    <section className="overflow-hidden rounded-2xl bg-white p-5 shadow-[0_8px_24px_rgba(30,55,45,0.05)]">
       {/* HEADER */}
-      <div className="border-b-2 border-slate-300 px-5 py-4">
+      <div className="border-b border-slate-100 pb-4">
         <h2 className="text-lg font-bold text-slate-950">
           AI Recommendations
         </h2>
@@ -36,15 +38,15 @@ export default function AIRecommendations() {
       </div>
 
       {/* RECOMMENDATIONS */}
-      <div className="space-y-3 p-4">
+      <div className="space-y-1 pt-3">
         {recommendations.map((recommendation, index) => (
           <article
             key={index}
-            className="rounded-md border-2 border-slate-300 bg-slate-50 px-4 py-4"
+            className="border-b border-slate-100 py-4 last:border-0"
           >
             <div className="flex items-start justify-between gap-5">
               {/* RECOMMENDATION CONTENT */}
-              <div className="min-w-0">
+              <div className="flex min-w-0 gap-3"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600"><Sparkles className="h-4 w-4" /></div><div className="min-w-0">
                 {/* LOW BOLD */}
                 <h3 className="text-base font-semibold leading-snug text-slate-950">
                   {recommendation.title}
@@ -54,7 +56,7 @@ export default function AIRecommendations() {
                 <p className="mt-2 text-sm font-normal leading-relaxed text-slate-700">
                   {recommendation.description}
                 </p>
-              </div>
+              </div></div>
 
               {/* CONFIDENCE */}
               <div className="shrink-0 text-right">

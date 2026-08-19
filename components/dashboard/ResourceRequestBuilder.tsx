@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import type { Incident } from "./IncidentFeed";
 import { useOperationalStore } from "@/lib/operational-store";
+import { Siren } from "lucide-react";
 
 type Priority = "Critical" | "High" | "Moderate";
 
@@ -50,6 +51,15 @@ const resources: Resource[] = [
   },
 ];
 
+const DISTRICT_OPTIONS = [
+  "Lakhimpur",
+  "Tinsukia",
+  "Dibrugarh",
+  "Jorhat",
+  "Sivasagar",
+  "Sonitpur",
+] as const;
+
 type ResourceRequestBuilderProps = {
   incident?: Incident | null;
   alertId?: string;
@@ -69,6 +79,9 @@ export default function ResourceRequestBuilder({
   const [authority, setAuthority] = useState(
     "District Emergency Control Room"
   );
+  const [selectedDistrict, setSelectedDistrict] = useState(
+    incident?.district.split(",")[0] ?? "Lakhimpur"
+  );
 
   const [selected, setSelected] = useState<
     Record<string, number>
@@ -76,6 +89,12 @@ export default function ResourceRequestBuilder({
     "medical-units": 1,
     "medical-officers": 1,
   });
+
+  useEffect(() => {
+    startTransition(() => {
+      setSelectedDistrict(incident?.district.split(",")[0] ?? "Lakhimpur");
+    });
+  }, [incident?.id, incident?.district]);
 
   // Derive effective priority when not manually overridden.
   const effectivePriority: Priority = manualOverride
@@ -123,9 +142,7 @@ export default function ResourceRequestBuilder({
         incident?.title ??
         "Manual emergency request",
 
-      district:
-        incident?.district ??
-        "Lakhimpur, Assam",
+      district: selectedDistrict,
 
       priority: effectivePriority.toUpperCase() as "CRITICAL" | "HIGH" | "MODERATE",
 
@@ -163,14 +180,14 @@ export default function ResourceRequestBuilder({
   return (
     <section
       id="resource-dispatch"
-      className="w-full overflow-hidden rounded-lg border-2 border-slate-400 bg-white shadow-sm"
+      className="w-full overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_rgba(30,55,45,0.05)]"
     >
 
       {/* ================================================= */}
       {/* HEADER */}
       {/* ================================================= */}
 
-      <div className="border-b-2 border-slate-300 bg-slate-50 px-6 py-5">
+      <div className="border-b border-slate-100 px-6 py-5">
 
         <div className="flex items-start justify-between gap-4">
 
@@ -185,9 +202,7 @@ export default function ResourceRequestBuilder({
             </p>
           </div>
 
-          <span className="shrink-0 rounded-md bg-red-600 px-4 py-2 text-sm font-extrabold tracking-wide text-white">
-            EMERGENCY
-          </span>
+          <span className="flex shrink-0 items-center gap-1.5 text-xs font-extrabold uppercase tracking-wide text-red-600"><Siren className="h-4 w-4" /> Emergency</span>
 
         </div>
       </div>
@@ -234,10 +249,17 @@ export default function ResourceRequestBuilder({
 
           <div className="mt-3 rounded-md border-2 border-slate-400 bg-slate-50 px-5 py-4">
 
-            <div className="text-lg font-bold text-slate-950">
-              {incident?.district ??
-                "Lakhimpur, Assam"}
-            </div>
+            <select
+              value={selectedDistrict}
+              onChange={(event) => setSelectedDistrict(event.target.value)}
+              className="w-full rounded-md border-2 border-slate-300 bg-white px-3 py-3 text-lg font-bold text-slate-950 outline-none focus:border-slate-700"
+            >
+              {DISTRICT_OPTIONS.map((district) => (
+                <option key={district} value={district}>
+                  {district}
+                </option>
+              ))}
+            </select>
 
             <div className="mt-1 text-sm font-medium text-slate-700">
               {incident
